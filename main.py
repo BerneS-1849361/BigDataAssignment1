@@ -8,10 +8,12 @@ class Pass1(xml.sax.ContentHandler):
         self.authors = []
 
         self.threshold = threshold
-        self.bucketSize = 10000
+        self.bucketSize = 10000 #todo make dynamic with memory
 
         self.authorCount = {}
         self.buckets = [0] * self.bucketSize
+
+        self.max = (0, [])
 
     # Call when an element starts
     def startElement(self, tag, attributes):
@@ -37,6 +39,8 @@ class Pass1(xml.sax.ContentHandler):
             self.author = content
 
     def fillBucket(self,  k):
+        if self.authors == 1:
+            print("test")
         tupleArray = list(itertools.combinations(self.authors, k))
         for tuple in tupleArray:
             index = self.hash(tuple)
@@ -65,6 +69,10 @@ class Pass1(xml.sax.ContentHandler):
     def filterFrequentAuthors(self):
         frequentAuthors = {}
         for author in self.authorCount:
+            if self.authorCount[author] > self.max[0]:
+                self.max = (self.authorCount[author], [author])
+            if self.authorCount[author] == self.max[0]:
+                self.max[1].append(author)
             if self.authorCount[author] >= self.threshold:
                 frequentAuthors[author] = self.authorCount[author]
         self.authorCount = frequentAuthors
@@ -72,8 +80,8 @@ class Pass1(xml.sax.ContentHandler):
 
 
 class PassN(xml.sax.ContentHandler):
-    def __init__(self, passCount, threshold, bitvector, frequentAuthors):
-        self.passCount = passCount
+    def __init__(self, passNr, threshold, bitvector, frequentAuthors):
+        self.passNr = passNr
         self.frequentAuthors = frequentAuthors
 
         self.author = ""
@@ -84,7 +92,7 @@ class PassN(xml.sax.ContentHandler):
 
         self.bitvector = bitvector
 
-        self.bucketSize = 10000
+        self.bucketSize = int(10000 / self.passNr)
         self.buckets = [0] * self.bucketSize
 
     # Call when an element starts
@@ -99,7 +107,7 @@ class PassN(xml.sax.ContentHandler):
             self.authors.append(self.author)
 
         if tag == "article":
-            AuthourCombinationArray = list(itertools.combinations(self.authors, self.passCount))
+            AuthourCombinationArray = list(itertools.combinations(self.authors, self.passNr))
             for combination in AuthourCombinationArray:
                 string = ""
                 frequent = True
@@ -125,8 +133,15 @@ class PassN(xml.sax.ContentHandler):
             self.author = content
 
 
+    def fillBucket(self, k):
+        tupleArray = list(itertools.combinations(self.authors, k))
+        for tuple in tupleArray:
+            index = self.hash(tuple)
+            self.buckets[index] += 1
+
+
 if __name__ == '__main__':
-    source = "dblp50000.xml"
+    source = "dblp.xml"
 
     # create an XMLReader
     parser = xml.sax.make_parser()
@@ -140,8 +155,9 @@ if __name__ == '__main__':
     #parse file with the first pass
     parser.parse(source)
 
-    print(handler.authorCount['Dennis Shasha'])
+    #print(handler.authorCount['Dennis Shasha'])
     handler.filterFrequentAuthors()
+    print(handler.max)
     nhandler = PassN(2, 10, handler.getBucketAsBitvector(), handler.authorCount)
     parser.setContentHandler(nhandler)
     parser.parse(source)
