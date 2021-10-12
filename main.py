@@ -23,12 +23,15 @@ class Pass1(xml.sax.ContentHandler):
 
     # Call when an elements ends
     def endElement(self, tag):
+        # if the element is an author, add the author to the author array of the article
+        # and add an occurrence to the dictionary
         if self.CurrentData == "author":
             self.authors.append(self.author)
             if self.author in self.authorCount:
                 self.authorCount[self.author] += 1
             else:
                 self.authorCount[self.author] = 1
+        # if the element is an article add the articles combinations to the bucket
         if tag == "article":
             self.fillBucket(2)
         self.CurrentData = ""
@@ -38,14 +41,15 @@ class Pass1(xml.sax.ContentHandler):
         if self.CurrentData == "author":
             self.author = content
 
+    # adds 1 to the bucket array where the combinations of length k of the current authors
+    # in the author array are hashed to
     def fillBucket(self,  k):
-        if self.authors == 1:
-            print("test")
         tupleArray = list(itertools.combinations(self.authors, k))
         for tuple in tupleArray:
             index = self.hash(tuple)
             self.buckets[index] += 1
 
+    # returns the bucketarray as a vector where a 1 is a frequent bucket
     def getBucketAsBitvector(self):
         bitVec = 0
         count = 0
@@ -57,6 +61,7 @@ class Pass1(xml.sax.ContentHandler):
             count += 1
         return bitVec
 
+    # hashes the given tuple
     def hash(self, tuple):
         string = ""
         for name in tuple:
