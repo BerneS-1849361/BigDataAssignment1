@@ -72,15 +72,17 @@ class Pass1(xml.sax.ContentHandler):
 
 
     def filterFrequentAuthors(self):
-        frequentAuthors = {}
+        self.authorCount = dict(filter(lambda elem: elem[1] >= self.threshold, self.authorCount.items()))
+
+    # returns the author(s) that wrote the most articles as a tuple of a number and an array of strings
+    def getMaxAuthor(self):
+        max = (0, [])
         for author in self.authorCount:
-            if self.authorCount[author] > self.max[0]:
-                self.max = (self.authorCount[author], [author])
-            if self.authorCount[author] == self.max[0]:
-                self.max[1].append(author)
-            if self.authorCount[author] >= self.threshold:
-                frequentAuthors[author] = self.authorCount[author]
-        self.authorCount = frequentAuthors
+            if self.authorCount[author] > max[0]:
+                max = (self.authorCount[author], [author])
+            elif self.authorCount[author] == max[0]:
+                max[1].append(author)
+        return max
 
 
 
@@ -189,7 +191,8 @@ if __name__ == '__main__':
     parser.parse(source)
     #print(handler.authorCount['Dennis Shasha'])
     handler.filterFrequentAuthors()
-    print(handler.max)
+
+    print(handler.getMaxAuthor())
     nhandler = PassN(2, 3, handler.getBucketAsBitvector(), handler.authorCount)
     parser.setContentHandler(nhandler)
     parser.parse(source)
