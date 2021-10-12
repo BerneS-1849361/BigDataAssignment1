@@ -63,6 +63,7 @@ class Pass1(xml.sax.ContentHandler):
 
     # hashes the given tuple
     def hash(self, tuple):
+        tuple = sorted(tuple)
         string = ""
         for name in tuple:
             string += name
@@ -124,6 +125,7 @@ class PassN(xml.sax.ContentHandler):
         if tag == "article":
             AuthourCombinationArray = list(itertools.combinations(self.authors, self.passNr))
             for combination in AuthourCombinationArray:
+                combination = tuple(sorted(combination))
                 string = ""
                 frequent = True
                 for name in combination:
@@ -136,7 +138,7 @@ class PassN(xml.sax.ContentHandler):
                 string = string.encode('utf-8')
                 index = int.from_bytes(string, 'little') % self.bucketSize
                 if self.bitvector & (1 << index):
-                    if not combination in self.authorTuples:
+                    if combination not in self.authorTuples:
                         self.authorTuples[combination] = 1
                     else:
                         self.authorTuples[combination] += 1
@@ -153,7 +155,6 @@ class PassN(xml.sax.ContentHandler):
     def getBucketAsBitvector(self):
         bitVec = 0
         count = 0
-        print(self.buckets)
         for i in self.buckets:
             if i >= self.threshold:
                 bitVec |= 1 << count
@@ -174,6 +175,18 @@ class PassN(xml.sax.ContentHandler):
             index = self.hash(tuple)
             self.buckets[index] += 1
 
+    def filterFrequentTuples(self):
+        self.authorTuples = dict(filter(lambda elem: elem[1] >= self.threshold, self.authorTuples.items()))
+
+    def getMaxTuple(self):
+        max = (0, [])
+        for tuple in self.authorTuples:
+            if self.authorTuples[tuple] > max[0]:
+                max = (self.authorTuples[tuple], [tuple])
+            elif self.authorTuples[tuple] == max:
+                max[1].append(tuple)
+        return max
+
 
 if __name__ == '__main__':
     source = "dblp50000.xml"
@@ -184,17 +197,17 @@ if __name__ == '__main__':
     parser.setFeature(xml.sax.handler.feature_namespaces, 0)
 
     # override the default ContextHandler
-    handler = Pass1(5)
+    handler = Pass1(6)
     parser.setContentHandler(handler)
 
     #parse file with the first pass
     parser.parse(source)
-    #print(handler.authorCount['Dennis Shasha'])
     handler.filterFrequentAuthors()
 
     print(handler.getMaxAuthor())
-    nhandler = PassN(2, 3, handler.getBucketAsBitvector(), handler.authorCount)
+    nhandler = PassN(2, 1, handler.getBucketAsBitvector(), handler.authorCount)
     parser.setContentHandler(nhandler)
     parser.parse(source)
 
-    print(f"{nhandler.getBucketAsBitvector(): 016b}")
+    nhandler.filterFrequentTuples()
+    print(nhandler.getMaxTuple())
