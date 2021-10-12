@@ -8,7 +8,7 @@ class Pass1(xml.sax.ContentHandler):
         self.authors = []
 
         self.threshold = threshold
-        self.bucketSize = 10000 #todo make dynamic with memory
+        self.bucketSize = 10000  # todo make dynamic with memory
 
         self.authorCount = {}
         self.buckets = [0] * self.bucketSize
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     parser.setFeature(xml.sax.handler.feature_namespaces, 0)
 
     # override the default ContextHandler
-    handler = Pass1(3)
+    handler = Pass1(5)
     parser.setContentHandler(handler)
 
     #parse file with the first pass
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
     count = 2
     prevHandler = handler
-    treshold = 2
+    treshold = 1
     while True:
         nhandler = PassN(count, treshold, prevHandler.getBucketAsBitvector(), handler.authorCount)
         parser.setContentHandler(nhandler)
