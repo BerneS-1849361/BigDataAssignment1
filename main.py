@@ -105,7 +105,8 @@ class PassN(xml.sax.ContentHandler):
     # Call when an element starts
     def startElement(self, tag, attributes):
         self.CurrentData = tag
-        if tag == "article":
+        if tag == "article" or tag == "inproceedings" or tag == "proceedings" or tag == "book" or \
+            tag == "incollection" or tag == "phdthesis" or tag == "mastersthesis" or tag == "www":
             self.authors = []
 
     def hash(self, tuple):
@@ -121,7 +122,8 @@ class PassN(xml.sax.ContentHandler):
         if self.CurrentData == "author":
             self.authors.append(self.author)
 
-        if tag == "article":
+        if tag == "article" or tag == "inproceedings" or tag == "proceedings" or tag == "book" or \
+                tag == "incollection" or tag == "phdthesis" or tag == "mastersthesis" or tag == "www":
             AuthourCombinationArray = list(itertools.combinations(self.authors, self.passNr))
             for combination in AuthourCombinationArray:
                 string = ""
