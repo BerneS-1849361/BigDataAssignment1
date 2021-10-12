@@ -201,17 +201,30 @@ if __name__ == '__main__':
     parser.setFeature(xml.sax.handler.feature_namespaces, 0)
 
     # override the default ContextHandler
-    handler = Pass1(10)
+    handler = Pass1(3)
     parser.setContentHandler(handler)
 
     #parse file with the first pass
     parser.parse(source)
     handler.filterFrequentAuthors()
-
     print(handler.getMaxAuthor())
-    nhandler = PassN(2, 1, handler.getBucketAsBitvector(), handler.authorCount)
-    parser.setContentHandler(nhandler)
-    parser.parse(source)
 
-    nhandler.filterFrequentTuples()
-    print(nhandler.getMaxTuple())
+    count = 2
+    prevHandler = handler
+    treshold = 3
+    while True:
+        nhandler = PassN(count, treshold, prevHandler.getBucketAsBitvector(), handler.authorCount)
+        parser.setContentHandler(nhandler)
+        parser.parse(source)
+
+        nhandler.filterFrequentTuples()
+        max = nhandler.getMaxTuple()
+        print(max)
+        count += 1
+        prevHandler = nhandler
+        if max[0] == 0:
+            break
+
+
+
+
