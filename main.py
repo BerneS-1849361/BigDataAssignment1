@@ -18,7 +18,8 @@ class Pass1(xml.sax.ContentHandler):
     # Call when an element starts
     def startElement(self, tag, attributes):
         self.CurrentData = tag
-        if tag == "article":
+        if tag == "article" or tag == "inproceedings" or tag == "proceedings" or tag == "book" or \
+                tag == "incollection" or tag == "phdthesis" or tag == "mastersthesis" or tag == "www":
             self.authors = []
 
     # Call when an elements ends
@@ -32,7 +33,8 @@ class Pass1(xml.sax.ContentHandler):
             else:
                 self.authorCount[self.author] = 1
         # if the element is an article add the articles combinations to the bucket
-        if tag == "article":
+        if tag == "article" or tag == "inproceedings" or tag == "proceedings" or tag == "book" or \
+                tag == "incollection" or tag == "phdthesis" or tag == "mastersthesis" or tag == "www":
             self.fillBucket(2)
         self.CurrentData = ""
 
@@ -199,7 +201,7 @@ if __name__ == '__main__':
     parser.setFeature(xml.sax.handler.feature_namespaces, 0)
 
     # override the default ContextHandler
-    handler = Pass1(6)
+    handler = Pass1(10)
     parser.setContentHandler(handler)
 
     #parse file with the first pass
