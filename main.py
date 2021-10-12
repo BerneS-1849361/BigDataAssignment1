@@ -1,5 +1,8 @@
 import itertools
 import xml.sax
+# Author: Jasper Volders
+# Author: Berne Sannen
+
 
 
 class Pass1(xml.sax.ContentHandler):
