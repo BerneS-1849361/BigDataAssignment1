@@ -95,7 +95,6 @@ class PassN(xml.sax.ContentHandler):
         self.frequentAuthors = frequentAuthors
 
         self.author = ""
-        self.key = ""
 
         self.authorTuples = {}
         self.threshold = threshold
@@ -113,6 +112,7 @@ class PassN(xml.sax.ContentHandler):
             self.authors = []
 
     def hash(self, tuple):
+        tuple = sorted(tuple)
         string = ""
         for name in tuple:
             string += name
@@ -141,18 +141,21 @@ class PassN(xml.sax.ContentHandler):
                     break
                 string = string.encode('utf-8')
                 index = int.from_bytes(string, 'little') % self.bucketSize
+                # if the tuple hashes to a frequent bucket
                 if self.bitvector & (1 << index):
+                    # add the tuple to the authorTuples dict
                     if combination not in self.authorTuples:
                         self.authorTuples[combination] = 1
                     else:
                         self.authorTuples[combination] += 1
-                # Add triplets
-                for author in self.authors:
-                    # If author also wrote on article, and not yet in the tuple
-                    if author in self.frequentAuthors and author not in combination:
-                        newTuple = combination + tuple(author)
-                        index = self.hash(newTuple)
-                        self.buckets[index] += 1
+
+                    # Add triplets
+                    for author in self.authors:
+                        # If author is also frequent, and not yet in the tuple
+                        if author in self.frequentAuthors and author not in combination:
+                            newTuple = combination + tuple(author)
+                            index = self.hash(newTuple)
+                            self.buckets[index] += 1
 
         self.CurrentData = ""
 
@@ -211,7 +214,7 @@ if __name__ == '__main__':
 
     count = 2
     prevHandler = handler
-    treshold = 3
+    treshold = 2
     while True:
         nhandler = PassN(count, treshold, prevHandler.getBucketAsBitvector(), handler.authorCount)
         parser.setContentHandler(nhandler)
