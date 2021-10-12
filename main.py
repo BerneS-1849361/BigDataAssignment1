@@ -141,6 +141,13 @@ class PassN(xml.sax.ContentHandler):
                     break
                 string = string.encode('utf-8')
                 index = int.from_bytes(string, 'little') % self.bucketSize
+
+                # length of previous bitvector
+                length = len(bin(self.bitvector)[2:])
+                # out of bounds means front 0 -> not frequent
+                if index >= length:
+                    break
+
                 # if the tuple hashes to a frequent bucket
                 if self.bitvector & (1 << index):
                     # add the tuple to the authorTuples dict
@@ -212,11 +219,12 @@ if __name__ == '__main__':
     handler.filterFrequentAuthors()
     print(handler.getMaxAuthor())
 
+
     count = 2
     prevHandler = handler
-    treshold = 2
+    treshold = 4
     while True:
-        nhandler = PassN(count, treshold, prevHandler.getBucketAsBitvector(), handler.authorCount)
+        nhandler = PassN(count, treshold / count, prevHandler.getBucketAsBitvector(), handler.authorCount)
         parser.setContentHandler(nhandler)
         parser.parse(source)
 
@@ -225,6 +233,7 @@ if __name__ == '__main__':
         print(max)
         count += 1
         prevHandler = nhandler
+
         if max[0] == 0:
             break
 
